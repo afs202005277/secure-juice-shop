@@ -36,7 +36,6 @@ module.exports = function login () {
       verifyPreLoginChallenges(req)
       const email = req.body.email
       const password = req.body.password
-      console.log(security.hash(password))
 
       const query = `
             SELECT * FROM Users 
