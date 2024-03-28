@@ -58,15 +58,42 @@ export class PaymentComponent implements OnInit {
   public totalPrice: any = 0
   public paymentMode: string = 'card'
   private readonly campaigns = {
-    WMNSDY2019: { validOn: 1551999600000, discount: 75 },
-    WMNSDY2020: { validOn: 1583622000000, discount: 60 },
-    WMNSDY2021: { validOn: 1615158000000, discount: 60 },
-    WMNSDY2022: { validOn: 1646694000000, discount: 60 },
-    WMNSDY2023: { validOn: 1678230000000, discount: 60 },
-    ORANGE2020: { validOn: 1588546800000, discount: 50 },
-    ORANGE2021: { validOn: 1620082800000, discount: 40 },
-    ORANGE2022: { validOn: 1651618800000, discount: 40 },
-    ORANGE2023: { validOn: 1683154800000, discount: 40 }
+    WMNSDY2019: {
+      validOn: 1551999600000,
+      discount: 75
+    },
+    WMNSDY2020: {
+      validOn: 1583622000000,
+      discount: 60
+    },
+    WMNSDY2021: {
+      validOn: 1615158000000,
+      discount: 60
+    },
+    WMNSDY2022: {
+      validOn: 1646694000000,
+      discount: 60
+    },
+    WMNSDY2023: {
+      validOn: 1678230000000,
+      discount: 60
+    },
+    ORANGE2020: {
+      validOn: 1588546800000,
+      discount: 50
+    },
+    ORANGE2021: {
+      validOn: 1620082800000,
+      discount: 40
+    },
+    ORANGE2022: {
+      validOn: 1651618800000,
+      discount: 40
+    },
+    ORANGE2023: {
+      validOn: 1683154800000,
+      discount: 40
+    }
   }
 
   constructor (private readonly location: Location, private readonly cookieService: CookieService,
@@ -74,14 +101,17 @@ export class PaymentComponent implements OnInit {
     private readonly router: Router, private readonly dialog: MatDialog, private readonly configurationService: ConfigurationService,
     private readonly basketService: BasketService, private readonly translate: TranslateService,
     private readonly activatedRoute: ActivatedRoute, private readonly ngZone: NgZone,
-    private readonly snackBarHelperService: SnackBarHelperService) { }
+    private readonly snackBarHelperService: SnackBarHelperService) {
+  }
 
   ngOnInit () {
     this.initTotal()
     this.walletService.get().subscribe((balance) => {
       this.walletBalance = balance
       this.walletBalanceStr = parseFloat(balance).toFixed(2)
-    }, (err) => { console.log(err) })
+    }, (err) => {
+      console.log(err)
+    })
     this.couponPanelExpanded = localStorage.getItem('couponPanelExpanded') ? JSON.parse(localStorage.getItem('couponPanelExpanded')) : false
     this.paymentPanelExpanded = localStorage.getItem('paymentPanelExpanded') ? JSON.parse(localStorage.getItem('paymentPanelExpanded')) : false
 
@@ -97,7 +127,9 @@ export class PaymentComponent implements OnInit {
           this.applicationName = config.application.name
         }
       }
-    }, (err) => { console.log(err) })
+    }, (err) => {
+      console.log(err)
+    })
   }
 
   initTotal () {
@@ -108,7 +140,9 @@ export class PaymentComponent implements OnInit {
       } else if (this.mode === 'deluxe') {
         this.userService.deluxeStatus().subscribe((res) => {
           this.totalPrice = res.membershipCost
-        }, (err) => { console.log(err) })
+        }, (err) => {
+          console.log(err)
+        })
       } else {
         const itemTotal = parseFloat(sessionStorage.getItem('itemTotal'))
         const promotionalDiscount = sessionStorage.getItem('couponDiscount') ? (parseFloat(sessionStorage.getItem('couponDiscount')) / 100) * itemTotal : 0
@@ -117,40 +151,53 @@ export class PaymentComponent implements OnInit {
           this.totalPrice = itemTotal + deliveryPrice - promotionalDiscount
         })
       }
-    }, (err) => { console.log(err) })
+    }, (err) => {
+      console.log(err)
+    })
   }
 
   applyCoupon () {
     this.campaignCoupon = this.couponControl.value
-    this.clientDate = new Date()
-    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    const offsetTimeZone = (this.clientDate.getTimezoneOffset() + 60) * 60 * 1000
-    this.clientDate.setHours(0, 0, 0, 0)
-    this.clientDate = this.clientDate.getTime() - offsetTimeZone
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-    sessionStorage.setItem('couponDetails', `${this.campaignCoupon}-${this.clientDate}`)
-    const campaign = this.campaigns[this.couponControl.value]
-    if (campaign) {
-      if (this.clientDate === campaign.validOn) {
-        this.showConfirmation(campaign.discount)
-      } else {
-        this.couponConfirmation = undefined
-        this.translate.get('INVALID_COUPON').subscribe((invalidCoupon) => {
-          this.couponError = { error: invalidCoupon }
-        }, (translationId) => {
-          this.couponError = { error: translationId }
-        })
-        this.resetCouponForm()
-      }
-    } else {
-      this.basketService.applyCoupon(Number(sessionStorage.getItem('bid')), encodeURIComponent(this.couponControl.value)).subscribe((discount: any) => {
-        this.showConfirmation(discount)
-      }, (err) => {
-        this.couponConfirmation = undefined
-        this.couponError = err
-        this.resetCouponForm()
+    this.clientDate = fetch('http://worldtimeapi.org/api/ip')
+      .then(async response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok')
+        }
+        return await response.json()
       })
-    }
+      .then((data: any) => {
+        const datetimeString = data.datetime
+        this.clientDate = new Date(datetimeString)
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        sessionStorage.setItem('couponDetails', `${this.campaignCoupon}-${this.clientDate}`)
+        const campaign = this.campaigns[this.couponControl.value]
+        if (campaign) {
+          if (this.clientDate === campaign.validOn) {
+            this.showConfirmation(campaign.discount)
+          } else {
+            this.couponConfirmation = undefined
+            this.translate.get('INVALID_COUPON').subscribe((invalidCoupon) => {
+              this.couponError = { error: invalidCoupon }
+            }, (translationId) => {
+              this.couponError = { error: translationId }
+            })
+            this.resetCouponForm()
+          }
+        } else {
+          this.basketService.applyCoupon(Number(sessionStorage.getItem('bid')), encodeURIComponent(this.couponControl.value)).subscribe((discount: any) => {
+            this.showConfirmation(discount)
+          }, (err) => {
+            this.couponConfirmation = undefined
+            this.couponError = err
+            this.resetCouponForm()
+          })
+        }
+      })
+      .catch(error => {
+        // Handle errors
+        console.error('There was a problem with the fetch operation:', error)
+      })
   }
 
   showConfirmation (discount) {
@@ -177,7 +224,10 @@ export class PaymentComponent implements OnInit {
   choosePayment () {
     sessionStorage.removeItem('itemTotal')
     if (this.mode === 'wallet') {
-      this.walletService.put({ balance: this.totalPrice, paymentId: this.paymentId }).subscribe(() => {
+      this.walletService.put({
+        balance: this.totalPrice,
+        paymentId: this.paymentId
+      }).subscribe(() => {
         sessionStorage.removeItem('walletTotal')
         this.ngZone.run(async () => await this.router.navigate(['/wallet']))
         this.snackBarHelperService.open('CHARGED_WALLET', 'confirmBar')
@@ -190,7 +240,9 @@ export class PaymentComponent implements OnInit {
         localStorage.setItem('token', data.token)
         this.cookieService.put('token', data.token)
         this.ngZone.run(async () => await this.router.navigate(['/deluxe-membership']))
-      }, (err) => { console.log(err) })
+      }, (err) => {
+        console.log(err)
+      })
     } else {
       if (this.paymentMode === 'wallet') {
         if (this.walletBalance < this.totalPrice) {
@@ -206,7 +258,8 @@ export class PaymentComponent implements OnInit {
   }
 
   // eslint-disable-next-line no-empty,@typescript-eslint/no-empty-function
-  noop () { }
+  noop () {
+  }
 
   showBitcoinQrCode () {
     this.dialog.open(QrCodeComponent, {
