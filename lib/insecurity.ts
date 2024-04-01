@@ -192,16 +192,26 @@ export const appendUserId = () => {
 }
 
 export const updateAuthenticatedUsers = () => (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.token || utils.jwtFrom(req)
-  if (token) {
-    jwt.verify(token, publicKey, (err: Error | null, decoded: any) => {
-      if (err === null) {
-        if (authenticatedUsers.get(token) === undefined) {
-          authenticatedUsers.put(token, decoded)
-          res.cookie('token', token)
-        }
-      }
-    })
+  const authHeader = req.headers['authorization'];
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Authorization header is missing' });
   }
-  next()
+
+  const token = authHeader.split(' ')[1];
+
+  jwt.verify(token, publicKey, (err: Error | null, decoded: any) => {
+    if (err === null) {
+      if (authenticatedUsers.get(token) === undefined) {
+        authenticatedUsers.put(token, decoded)
+        res.cookie('token', token)
+      }
+    } else {
+      // Handle invalid token or token verification error
+      return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    }
+  });
+
+  next();
 }
+
