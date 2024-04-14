@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: MIT
  */
 
-import Hashids = require('hashids/cjs')
 import { type Request, type Response } from 'express'
 import { ChallengeModel } from '../models/challenge'
+import AES from 'crypto-js/aes'
 
 const sequelize = require('sequelize')
 const challenges = require('../data/datacache').challenges
 const Op = sequelize.Op
 
+const secretKey = '34aW;HMyP)"jH04kL4Np1ZQ8q1&X0K'
+
 module.exports.continueCode = function continueCode () {
-  const hashids = new Hashids('this is my salt', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
   return (req: Request, res: Response) => {
     const ids = []
     for (const name in challenges) {
@@ -20,33 +21,31 @@ module.exports.continueCode = function continueCode () {
         if (challenges[name].solved) ids.push(challenges[name].id)
       }
     }
-    const continueCode = ids.length > 0 ? hashids.encode(ids) : undefined
+    const continueCode = ids.length > 0 ? AES.encrypt(ids.toString(), secretKey).toString() : undefined
     res.json({ continueCode })
   }
 }
 
 module.exports.continueCodeFindIt = function continueCodeFindIt () {
-  const hashids = new Hashids('this is the salt for findIt challenges', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
   return async (req: Request, res: Response) => {
     const ids = []
     const challenges = await ChallengeModel.findAll({ where: { codingChallengeStatus: { [Op.gte]: 1 } } })
     for (const challenge of challenges) {
       ids.push(challenge.id)
     }
-    const continueCode = ids.length > 0 ? hashids.encode(ids) : undefined
+    const continueCode = ids.length > 0 ? AES.encrypt(ids.toString(), secretKey).toString() : undefined
     res.json({ continueCode })
   }
 }
 
 module.exports.continueCodeFixIt = function continueCodeFixIt () {
-  const hashids = new Hashids('yet another salt for the fixIt challenges', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
   return async (req: Request, res: Response) => {
     const ids = []
     const challenges = await ChallengeModel.findAll({ where: { codingChallengeStatus: { [Op.gte]: 2 } } })
     for (const challenge of challenges) {
       ids.push(challenge.id)
     }
-    const continueCode = ids.length > 0 ? hashids.encode(ids) : undefined
+    const continueCode = ids.length > 0 ? AES.encrypt(ids.toString(), secretKey).toString() : undefined
     res.json({ continueCode })
   }
 }
