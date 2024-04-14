@@ -3,17 +3,21 @@
  * SPDX-License-Identifier: MIT
  */
 
-import Hashids = require('hashids/cjs')
 import { type Request, type Response } from 'express'
+import AES from 'crypto-js/aes'
+import CryptoJS from 'crypto-js'
 
 const challenges = require('../data/datacache').challenges
 const challengeUtils = require('../lib/challengeUtils')
 
+const secretKey = '34aW;HMyP)"jH04kL4Np1ZQ8q1&X0K'
+
 module.exports.restoreProgress = function restoreProgress () {
   return ({ params }: Request, res: Response) => {
-    const hashids = new Hashids('this is my salt', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
     const continueCode = params.continueCode
-    const ids = hashids.decode(continueCode)
+    const decryptedData = AES.decrypt(continueCode, secretKey)
+    const decryptedString = decryptedData.toString(CryptoJS.enc.Utf8);
+    const ids = decryptedString.split(',').map(Number);
     if (challengeUtils.notSolved(challenges.continueCodeChallenge) && ids.includes(999)) {
       challengeUtils.solve(challenges.continueCodeChallenge)
       res.end()
@@ -34,9 +38,11 @@ module.exports.restoreProgress = function restoreProgress () {
 
 module.exports.restoreProgressFindIt = function restoreProgressFindIt () {
   return async ({ params }: Request, res: Response) => {
-    const hashids = new Hashids('this is the salt for findIt challenges', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
+  
     const continueCodeFindIt = params.continueCode
-    const idsFindIt = hashids.decode(continueCodeFindIt)
+    const decryptedData = AES.decrypt(continueCodeFindIt, secretKey)
+    const decryptedString = decryptedData.toString(CryptoJS.enc.Utf8);
+    const idsFindIt = decryptedString.split(',').map(Number);
     if (idsFindIt.length > 0) {
       for (const key in challenges) {
         if (Object.prototype.hasOwnProperty.call(challenges, key)) {
@@ -53,10 +59,11 @@ module.exports.restoreProgressFindIt = function restoreProgressFindIt () {
 }
 
 module.exports.restoreProgressFixIt = function restoreProgressFixIt () {
-  const hashids = new Hashids('yet another salt for the fixIt challenges', 60, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
   return async ({ params }: Request, res: Response) => {
     const continueCodeFixIt = params.continueCode
-    const idsFixIt = hashids.decode(continueCodeFixIt)
+    const decryptedData = AES.decrypt(continueCodeFixIt, secretKey)
+    const decryptedString = decryptedData.toString(CryptoJS.enc.Utf8);
+    const idsFixIt = decryptedString.split(',').map(Number);
     if (idsFixIt.length > 0) {
       for (const key in challenges) {
         if (Object.prototype.hasOwnProperty.call(challenges, key)) {
