@@ -13,9 +13,6 @@ import jws from 'jws'
 import sanitizeHtmlLib from 'sanitize-html'
 import sanitizeFilenameLib from 'sanitize-filename'
 import * as utils from './utils'
-import AES from 'crypto-js/aes'
-import CryptoJS from 'crypto-js'
-
 
 /* jslint node: true */
 // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
@@ -23,10 +20,7 @@ import CryptoJS from 'crypto-js'
 import * as z85 from 'z85'
 
 export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-public-key'
-
 const privateKey = '-----BEGIN RSA PRIVATE KEY-----\r\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8iMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6syCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQABAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2wXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLtyg6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5HfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wumm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinrutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7TnkzeJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24Zxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\r\n-----END RSA PRIVATE KEY-----'
-
-const secretKey = '9RaGUme1+6Y8x)£G<6eNfv8LUeMOgq';
 
 interface ResponseWithUser {
   status: string
@@ -110,16 +104,14 @@ export const userEmailFrom = ({ headers }: any) => {
 
 export const generateCoupon = (discount: number, date = new Date()) => {
   const coupon = utils.toMMMYY(date) + '-' + discount
-
-  return AES.encrypt(coupon, secretKey).toString();
+  return z85.encode(coupon)
 }
 
 export const discountFromCoupon = (coupon: string) => {
   if (coupon) {
-    let decoded = AES.decrypt(coupon, secretKey)
-    decoded = CryptoJS.enc.Utf8.stringify(decoded);
-    if (decoded && (hasValidFormat(decoded) != null)) { 
-      const parts = decoded.split('-')
+    const decoded = z85.decode(coupon)
+    if (decoded && (hasValidFormat(decoded.toString()) != null)) {
+      const parts = decoded.toString().split('-')
       const validity = parts[0]
       if (utils.toMMMYY(new Date()) === validity) {
         const discount = parts[1]
@@ -149,7 +141,7 @@ export const redirectAllowlist = new Set([
 export const isRedirectAllowed = (url: string) => {
   let allowed = false
   for (const allowedUrl of redirectAllowlist) {
-    allowed = allowed || url === allowedUrl // vuln-code-snippet vuln-line redirectChallenge
+    allowed = allowed || url.includes(allowedUrl) // vuln-code-snippet vuln-line redirectChallenge
   }
   return allowed
 }
@@ -188,38 +180,33 @@ export const isCustomer = (req: Request) => {
   return decodedToken?.data?.role === roles.customer
 }
 
-export const appendUserId = () => {
+export const appendUserId = (returnAnonymous: boolean = false) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       req.body.UserId = authenticatedUsers.tokenMap[utils.jwtFrom(req)].data.id
       next()
     } catch (error: any) {
-      res.status(401).json({ status: 'error', message: error })
+      if(returnAnonymous){
+        req.body.UserId = null
+        next()
+      } else{
+        res.status(401).json({ status: 'error', message: error })
+      }
     }
   }
 }
 
 export const updateAuthenticatedUsers = () => (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-
-  if (!authHeader) {
-    return res.status(401).json({ message: 'Authorization header is missing' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  jwt.verify(token, publicKey, (err: Error | null, decoded: any) => {
-    if (err === null) {
-      if (authenticatedUsers.get(token) === undefined) {
-        authenticatedUsers.put(token, decoded)
-        res.cookie('token', token)
+  const token = req.cookies.token || utils.jwtFrom(req)
+  if (token) {
+    jwt.verify(token, publicKey, (err: Error | null, decoded: any) => {
+      if (err === null) {
+        if (authenticatedUsers.get(token) === undefined) {
+          authenticatedUsers.put(token, decoded)
+          res.cookie('token', token)
+        }
       }
-    } else {
-      // Handle invalid token or token verification error
-      return res.status(401).json({ message: 'Unauthorized: Invalid token' });
-    }
-  });
-
-  next();
+    })
+  }
+  next()
 }
-
