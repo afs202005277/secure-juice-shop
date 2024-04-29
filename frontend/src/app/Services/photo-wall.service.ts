@@ -18,10 +18,11 @@ export class PhotoWallService {
   constructor (private readonly http: HttpClient) { }
 
   addMemory (caption: string, image: File) {
-    const postData = new FormData()
-    postData.append('image', image, caption)
-    postData.append('caption', caption)
-    return this.http.post(this.host, postData).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    const modifiedImage = new File([image], encodeURIComponent(image.name));
+    const postData = new FormData();
+    postData.append('image', modifiedImage, caption);
+    postData.append('caption', caption);
+    return this.http.post(this.host, postData).pipe(map((response: any) => response.data), catchError((err) => { throw err }));
   }
 
   get () {

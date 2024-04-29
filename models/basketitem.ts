@@ -1,16 +1,12 @@
-/*
- * Copyright (c) 2014-2023 Bjoern Kimminich & the OWASP Juice Shop contributors.
- * SPDX-License-Identifier: MIT
- */
-
-/* jslint node: true */
 import {
   Model,
   type InferAttributes,
   type InferCreationAttributes,
   DataTypes,
   type CreationOptional,
-  type Sequelize
+  type Sequelize,
+  ValidationError,
+  ValidationErrorItem
 } from 'sequelize'
 
 class BasketItem extends Model<
@@ -21,6 +17,13 @@ InferCreationAttributes<BasketItem>
   declare BasketId: number
   declare id: CreationOptional<number>
   declare quantity: number
+
+  // Custom validation to ensure quantity is positive
+  static validateQuantity(value: number) {
+    if (value < 0) {
+      throw new Error('Quantity must be positive');
+    }
+  }
 }
 
 const BasketItemModelInit = (sequelize: Sequelize) => {
@@ -37,7 +40,15 @@ const BasketItemModelInit = (sequelize: Sequelize) => {
         primaryKey: true,
         autoIncrement: true
       },
-      quantity: DataTypes.INTEGER
+      quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          customValidator(value: number) {
+            BasketItem.validateQuantity(value)
+          }
+        }
+      }
     },
     {
       tableName: 'BasketItems',
