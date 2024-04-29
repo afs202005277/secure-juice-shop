@@ -15,7 +15,8 @@ const challenges = require('../data/datacache').challenges
 module.exports = function retrieveBasket () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id
-    BasketModel.findOne({ where: { id }, include: [{ model: ProductModel, paranoid: false, as: 'Products' }] })
+
+    BasketModel.findOne({ where: { id: id, UserId: security.authenticatedUsers.tokenMap[utils.jwtFrom(req)].data.id }, include: [{ model: ProductModel, paranoid: false, as: 'Products' }] })
       .then((basket: BasketModel | null) => {
         /* jshint eqeqeq:false */
         challengeUtils.solveIf(challenges.basketAccessChallenge, () => {
