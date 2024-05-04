@@ -228,6 +228,14 @@ module.exports.process = function respond () {
       return
     }
 
+    const query = req.body.query.toString()
+    if (query.includes('")')) {
+      res.status(400).json({
+        error: 'Invalid characters detected'
+      })
+      return
+    }
+
     if (req.body.action === 'query') {
       await processQuery(user, req, res, next)
     } else if (req.body.action === 'setname') {
