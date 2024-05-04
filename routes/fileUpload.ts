@@ -59,14 +59,22 @@ function checkUploadSize ({ file }: Request, res: Response, next: NextFunction) 
   if (file != null) {
     challengeUtils.solveIf(challenges.uploadSizeChallenge, () => { return file?.size > 100000 })
   }
+  if (file != null && file?.size > 100000) {
+    res.status(400).end()
+    return
+  }
   next()
 }
 
 function checkFileType ({ file }: Request, res: Response, next: NextFunction) {
   const fileType = file?.originalname.substr(file.originalname.lastIndexOf('.') + 1).toLowerCase()
+  const invalidExtension = !(fileType === 'pdf' || fileType === 'xml' || fileType === 'zip')
   challengeUtils.solveIf(challenges.uploadTypeChallenge, () => {
-    return !(fileType === 'pdf' || fileType === 'xml' || fileType === 'zip')
+    return invalidExtension
   })
+  if (invalidExtension) {
+    res.status(400).end()
+  }
   next()
 }
 
