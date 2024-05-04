@@ -24,14 +24,6 @@ library.add(faBomb)
 export class ComplaintComponent implements OnInit {
   public customerControl: UntypedFormControl = new UntypedFormControl({ value: '', disabled: true }, [])
   public messageControl: UntypedFormControl = new UntypedFormControl('', [Validators.required, Validators.maxLength(160)])
-  @ViewChild('fileControl', { static: true }) fileControl!: ElementRef // For controlling the DOM Element for file input.
-  public fileUploadError: any = undefined // For controlling error handling related to file input.
-  public uploader: FileUploader = new FileUploader({
-    url: environment.hostServer + '/file-upload',
-    authToken: `Bearer ${localStorage.getItem('token')}`,
-    allowedMimeType: ['application/pdf', 'application/xml', 'text/xml', 'application/zip', 'application/x-zip-compressed', 'multipart/x-zip'],
-    maxFileSize: 100000
-  })
 
   public userEmail: any = undefined
   public complaint: any = undefined
@@ -41,18 +33,6 @@ export class ComplaintComponent implements OnInit {
 
   ngOnInit () {
     this.initComplaint()
-    this.uploader.onWhenAddingFileFailed = (item, filter) => {
-      this.fileUploadError = filter
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(`Error due to : ${filter.name}`)
-    }
-    this.uploader.onAfterAddingFile = () => {
-      this.fileUploadError = undefined
-    }
-    this.uploader.onSuccessItem = () => {
-      this.saveComplaint()
-      this.uploader.clearQueue()
-    }
     this.formSubmitService.attachEnterKeyHandler('complaint-form', 'submitButton', () => { this.save() })
   }
 
@@ -69,12 +49,7 @@ export class ComplaintComponent implements OnInit {
   }
 
   save () {
-    if (this.uploader.queue[0]) {
-      this.uploader.queue[0].upload()
-      this.fileControl.nativeElement.value = null
-    } else {
-      this.saveComplaint()
-    }
+    this.saveComplaint()
   }
 
   saveComplaint () {
@@ -87,7 +62,6 @@ export class ComplaintComponent implements OnInit {
       })
       this.initComplaint()
       this.resetForm()
-      this.fileUploadError = undefined
     }, (error) => error)
   }
 
@@ -95,6 +69,5 @@ export class ComplaintComponent implements OnInit {
     this.messageControl.setValue('')
     this.messageControl.markAsUntouched()
     this.messageControl.markAsPristine()
-    this.fileControl.nativeElement.value = null
   }
 }

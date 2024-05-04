@@ -10,13 +10,6 @@
 
     <div class="confirmation" [hidden]="!(confirmation && !messageControl.dirty)">{{ confirmation }}</div>
 
-    <div class="error fileUploadError" *ngIf="(fileUploadError && fileUploadError.name == 'mimeType')">{{
-      "INVALID_FILE_TYPE" | translate: { type: 'PDF, ZIP' } }}
-    </div>
-    <div class="error fileUploadError" *ngIf="(fileUploadError && fileUploadError.name == 'fileSize')">{{
-      "INVALID_FILE_SIZE" | translate: { size: '100 KB' } }}
-    </div>
-
     <div class="form-container" id="complaint-form">
 
       <mat-form-field appearance="outline" color="accent">
@@ -40,14 +33,9 @@
         <mat-hint align="end">{{complaintMessage.value?.length || 0}}/160</mat-hint>
       </mat-form-field>
 
-      <div style="margin-top: 15px;">
-        <label for="file" translate>LABEL_INVOICE<span>:</span></label>
-        <input #fileControl ng2FileSelect [uploader]="uploader" id="file" type="file" accept=".pdf,.zip" style="margin-left: 10px;" aria-label="Input area for uploading a single invoice PDF or XML B2B order file or a ZIP archive containing multiple invoices or orders<!---->">
-      </div>
-
     </div>
 
-    <button type="submit" id="submitButton" [disabled]="messageControl.invalid || fileUploadError" (click)="save()"
+    <button type="submit" id="submitButton" [disabled]="messageControl.invalid" (click)="save()"
             mat-raised-button color="primary" aria-label="Button to send the complaint">
       <i class="material-icons">
         send
