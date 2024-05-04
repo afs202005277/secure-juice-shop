@@ -31,7 +31,8 @@ const FeedbackModelInit = (sequelize: Sequelize) => {
   Feedback.init(
     {
       UserId: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
+        unique: true
       },
       id: {
         type: DataTypes.INTEGER,
