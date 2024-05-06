@@ -110,6 +110,9 @@ exports.serverSideChallenges = () => (req: Request, res: Response, next: NextFun
 function jwtChallenge (challenge: Challenge, req: Request, algorithm: string, email: string | RegExp) {
   const token = utils.jwtFrom(req)
   if (token) {
+    if (algorithm === 'none') {
+      return false
+    }
     const decoded = jws.decode(token) ? jwt.decode(token) : null
     jwt.verify(token, security.publicKey, (err: VerifyErrors | null, verified: JwtPayload) => {
       if (err === null) {
