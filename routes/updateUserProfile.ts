@@ -19,6 +19,12 @@ module.exports = function updateUserProfile () {
     if (loggedInUser) {
       UserModel.findByPk(loggedInUser.data.id).then((user: UserModel | null) => {
         if (user != null) {
+          const usernameRegex = /^[a-zA-Z0-9_]+$/; // Regular expression to allow only alphanumeric characters and underscores
+          if (!usernameRegex.test(req.body.username)) {
+            res.redirect(process.env.BASE_PATH + '/profile')
+            return
+          }
+
           challengeUtils.solveIf(challenges.csrfChallenge, () => {
             return ((req.headers.origin?.includes('://htmledit.squarefree.com')) ??
               (req.headers.referer?.includes('://htmledit.squarefree.com'))) &&
