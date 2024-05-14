@@ -33,8 +33,7 @@ export class AdministrationComponent implements OnInit {
   public resultsLengthFeedback = 0
   @ViewChild('paginatorUsers') paginatorUsers: MatPaginator
   @ViewChild('paginatorFeedb') paginatorFeedb: MatPaginator
-  constructor (private readonly dialog: MatDialog, private readonly userService: UserService, private readonly feedbackService: FeedbackService,
-    private readonly sanitizer: DomSanitizer) {}
+  constructor (private readonly dialog: MatDialog, private readonly userService: UserService, private readonly feedbackService: FeedbackService) {}
 
   ngOnInit () {
     this.findAllUsers()
@@ -45,10 +44,14 @@ export class AdministrationComponent implements OnInit {
     this.userService.find().subscribe((users) => {
       this.userDataSource = users
       this.userDataSourceHidden = users
+
       for (const user of this.userDataSource) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        user.email = this.sanitizer.bypassSecurityTrustHtml(`<span class="${user.token ? 'confirmation' : 'error'}">${user.email}</span>`)
+        user.styledEmail = {
+          email: user.email,
+          class: user.token ? 'confirmation' : 'error'
+        }
       }
+
       this.userDataSource = new MatTableDataSource(this.userDataSource)
       this.userDataSource.paginator = this.paginatorUsers
       this.resultsLengthUser = users.length
@@ -61,9 +64,6 @@ export class AdministrationComponent implements OnInit {
   findAllFeedbacks () {
     this.feedbackService.find().subscribe((feedbacks) => {
       this.feedbackDataSource = feedbacks
-      for (const feedback of this.feedbackDataSource) {
-        feedback.comment = this.sanitizer.bypassSecurityTrustHtml(feedback.comment)
-      }
       this.feedbackDataSource = new MatTableDataSource(this.feedbackDataSource)
       this.feedbackDataSource.paginator = this.paginatorFeedb
       this.resultsLengthFeedback = feedbacks.length
