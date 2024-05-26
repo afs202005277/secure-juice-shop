@@ -31,16 +31,16 @@ RUN rm -rf node_modules/libxmljs2/build && \
 FROM gcr.io/distroless/nodejs20-debian11
 ARG BUILD_DATE
 ARG VCS_REF
-LABEL maintainer="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \
-    org.opencontainers.image.title="OWASP Juice Shop" \
-    org.opencontainers.image.description="Probably the most modern and sophisticated insecure web application" \
-    org.opencontainers.image.authors="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \
+LABEL maintainer="Network Security Group 1" \
+    org.opencontainers.image.title="Secure OWASP Juice Shop" \
+    org.opencontainers.image.description="From the most modern and sophisticated insecure web application to a fortified one" \
+    org.opencontainers.image.authors="Alexandre Nunes, Andre Sousa, Diogo Babo, Goncalo Pinto" \
     org.opencontainers.image.vendor="Open Web Application Security Project" \
     org.opencontainers.image.documentation="https://help.owasp-juice.shop" \
     org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.version="16.0.0" \
+    org.opencontainers.image.version="16.0.1" \
     org.opencontainers.image.url="https://owasp-juice.shop" \
-    org.opencontainers.image.source="https://github.com/juice-shop/juice-shop" \
+    org.opencontainers.image.source="https://github.com/afs202005277/secure-juice-shop" \
     org.opencontainers.image.revision=$VCS_REF \
     org.opencontainers.image.created=$BUILD_DATE
 WORKDIR /juice-shop
@@ -49,4 +49,3 @@ COPY --chown=65532:0 --from=libxmljs-builder /juice-shop/node_modules/libxmljs2 
 USER 65532
 EXPOSE 3000
 CMD ["/juice-shop/build/app.js"]
-# docker build -t juice-shop . && docker run -d -p 3000:3000 juice-shop
