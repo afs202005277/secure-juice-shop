@@ -1,4 +1,4 @@
-# ![Juice Shop Logo](https://raw.githubusercontent.com/juice-shop/juice-shop/master/frontend/src/assets/public/images/JuiceShop_Logo_100px.png) OWASP Juice Shop
+# ![Juice Shop Logo](https://raw.githubusercontent.com/juice-shop/juice-shop/master/frontend/src/assets/public/images/JuiceShop_Logo_100px.png) Secured OWASP Juice Shop
 
 This project was developed for the Network Security course unit, as part of our Master in Informatics and Computing Engineering.
 The goal of the project is to study the most common vulnerabilities found in websites and learn how to exploit them. With this knowledge, we worked on securing the OWASP Juice Shop. The result is in the [website](./website) folder.
